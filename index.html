@@ -155,56 +155,51 @@
     </div>
 
     <script>
-      function getStoredUsers(callback) {
-    // Make an HTTP request to the Google Apps Script web app
-    var scriptUrl = 'https://script.google.com/macros/s/AKfycbzHL1iGZSgIrTsmVqo0G8nYq6HijYXsJC6ktGgj8HUYKns9-3cLOCuvdDnvau6gj5ax/exec';
+         function getStoredUsers(callback) {
+            var scriptUrl = 'YOUR_SCRIPT_URL'; // Replace with your actual Google Apps Script URL
 
-    $.ajax({
-        url: scriptUrl,
-        method: 'GET',
-        contentType: 'application/json',
-        data: { action: 'getUsers' },
-        success: function(response) {
-            console.log('Users retrieved from Google Sheets:', response);
-            if (callback) {
-                callback(response.users || []);
-            }
-        },
-        error: function(error) {
-            console.error('Error retrieving users from Google Sheets:', error);
-            if (callback) {
-                callback([]);
-            }
+            $.ajax({
+                url: scriptUrl,
+                method: 'GET',
+                contentType: 'application/json',
+                data: { action: 'getUsers' },
+                success: function(response) {
+                    console.log('Users retrieved from Google Sheets:', response);
+                    if (callback) {
+                        callback(response.users || []);
+                    }
+                },
+                error: function(error) {
+                    console.error('Error retrieving users from Google Sheets:', error);
+                    if (callback) {
+                        callback([]);
+                    }
+                }
+            });
         }
-    });
-}
 
-getStoredUsers(function(users) {
-    // Do something with the retrieved users
-    console.log(users);
-});
-        
-function saveUser(user) {
-    var users = getStoredUsers();
-    users.push(user);
-    localStorage.setItem('users', JSON.stringify(users));
+        function saveUser(user) {
+            var scriptUrl = 'YOUR_SCRIPT_URL'; // Replace with your actual Google Apps Script URL
+            var users = [];
 
-    // Make an HTTP request to the Google Apps Script web app
-    var scriptUrl = 'https://script.google.com/macros/s/AKfycbzHL1iGZSgIrTsmVqo0G8nYq6HijYXsJC6ktGgj8HUYKns9-3cLOCuvdDnvau6gj5ax/exec';
-    
-    $.ajax({
-        url: scriptUrl,
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ action: 'saveUser', user: user }),
-        success: function(response) {
-            console.log('User saved to Google Sheets:', response);
-        },
-        error: function(error) {
-            console.error('Error saving user to Google Sheets:', error);
+            getStoredUsers(function(existingUsers) {
+                users = existingUsers;
+                users.push(user);
+
+                $.ajax({
+                    url: scriptUrl,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ action: 'saveUser', users: users }),
+                    success: function(response) {
+                        console.log('User saved to Google Sheets:', response);
+                    },
+                    error: function(error) {
+                        console.error('Error saving user to Google Sheets:', error);
+                    }
+                });
+            });
         }
-    });
-}
 
         function getRandomColor() {
             var letters = '0123456789ABCDEF';
