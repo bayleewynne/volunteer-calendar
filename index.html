@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css" />
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+
+        h2 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 20px;
+            font-family: 'Georgia', serif;
+            font-size: 36px;
+        }
+
+        p.subtitle {
+            color: #2d2d2d;
+            text-align: center;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        p.message {
+            color: #000;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            color: #2d2d2d;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #calendar {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #eventDetailsTooltip {
+            display: none;
+            position: absolute;
+            background-color: #007bff;
+            color: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            z-index: 1000;
+        }
+
+        #eventDetailsTooltip p {
+            margin: 0;
+        }
+
+        #eventDetailsList {
+            list-style-type: none;
+            padding: 0;
+            margin: 10px;
+        }
+
+        #eventDetailsList li {
+            margin-bottom: 8px;
+            color: #2d2d2d;
+        }
+
+        .ui-dialog-titlebar {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+        }
+
+        .ui-dialog-buttonset button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .ui-dialog-buttonset button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
+</head>
+<body>
+
+    <h2>Holiday Nights Calendar</h2>
+    <p class="subtitle">Please contact Ryan or Holly at volunteers@edisonford.org to change your availability.</p>
+
+    <form id="workForm">
+        <p class="message">Thank you for volunteering! Please include your full name and select the date you're available.</p>
+
+        <label for="name">Full Name:</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="dates">Select Dates:</label>
+        <input type="text" id="dates" name="dates" class="date-picker" required>
+
+        <button type="button" onclick="submitForm()">Submit</button>
+    </form>
+
+    <div id="calendar"></div>
+
+    <div id="eventDetailsTooltip"></div>
+
+    <div id="eventDetailsModal" title="Dates You're Volunteering">
+        <ul id="eventDetailsList"></ul>
+    </div>
+
+    <script>
+        function getStoredUsers() {
+            return JSON.parse(localStorage.getItem('users')) || [];
+        }
+
+        function saveUser(user) {
+            var users = getStoredUsers();
+            users.push(user);
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        function getUserColor(name) {
+            var users = getStoredUsers();
+            var user = users.find(u => u.name === name);
+            return user ? user.color : getRandomColor();
+        }
+
+        function saveEvents(events) {
+            localStorage.setItem('events', JSON.stringify(events));
+        }
+
+        function getStoredEvents() {
+            return JSON.parse(localStorage.getItem('events')) || [];
+        }
+
+        $(document).ready(function() {
+            $('.date-picker').datepicker({
+                dateFormat: 'yy-mm-dd',
+                multidate: true
+            });
+
+            var users = getStoredUsers();
+            var events = getStoredEvents();
+
+            $('#calendar').fullCalendar({
+                header: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'month,agendaWeek,agendaDay'
+                },
+                defaultView: 'month',
+                editable: false,
+                eventLimit: true,
+                events: events.map(event => ({
+                    title: event.name,
+                    start: event.start,
+                    color: getUserColor(event.name)
+                })),
+                eventMouseover: function(calEvent, jsEvent, view) {
+                    showEventDetailsTooltip(calEvent.title, jsEvent.pageX, jsEvent.pageY);
+                },
+                eventMouseout: function(calEvent, jsEvent, view) {
+                    hideEventDetailsTooltip();
+                },
+                eventClick: function(calEvent, jsEvent, view) {
+                    showEventDetails(calEvent.title);
+                }
+            });
+        });
+
+        function submitForm() {
+            var name = $('#name').val();
+            var dates = $('#dates').val().split(',');
+
+            saveUser({ name, color: getRandomColor() });
+
+            var events = getStoredEvents();
+            dates.forEach(function(date) {
+                events.push({
+                    name,
+                    start: date
+                });
+            });
+
+            saveEvents(events);
+
+            var calendar = $('#calendar');
+            calendar.fullCalendar('removeEvents');
+            calendar.fullCalendar('addEventSource', events.map(event => ({
+                title: event.name,
+                start: event.start,
+                color: getUserColor(event.name)
+            })));
+
+            $('#name').val('');
+            $('#dates').val('');
+        }
+
+        function showEventDetailsTooltip(userName, mouseX, mouseY) {
+            var userEvents = getStoredEvents().filter(event => event.name === userName);
+            var eventDetailsTooltip = $('#eventDetailsTooltip');
+            var tooltipContent = '<p>Dates Volunteering</p>';
+
+            userEvents.forEach(function(event) {
+                tooltipContent += '<p>' + moment(event.start).format('MMMM D, YYYY') + '</p>';
+            });
+
+            eventDetailsTooltip.html(tooltipContent);
+            eventDetailsTooltip.css({
+                top: mouseY + 10,
+                left: mouseX + 10,
+                display: 'block'
+            });
+        }
+
+        function hideEventDetailsTooltip() {
+            $('#eventDetailsTooltip').hide();
+        }
+
+        function showEventDetails(userName) {
+            var userEvents = getStoredEvents().filter(event => event.name === userName);
+            var eventDetailsList = $('#eventDetailsList');
+            eventDetailsList.empty();
+
+            userEvents.forEach(function(event) {
+                var listItem = $('<li>').text(moment(event.start).format('MMMM D, YYYY'));
+                eventDetailsList.append(listItem);
+            });
+
+            $('#eventDetailsModal').dialog({
+                modal: true,
+                width: 300,
+                buttons: {
+                    Ok: function() {
+                        $(this).dialog('close');
+                    }
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
