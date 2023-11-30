@@ -156,7 +156,7 @@
 
     <script>
          function getStoredUsers(callback) {
-            var scriptUrl = 'YOUR_SCRIPT_URL'; // Replace with your actual Google Apps Script URL
+            var scriptUrl = 'https://script.google.com/macros/s/AKfycbyOk3ZPmWzE-CtMFxyB3e4LBVhpsdC2vZ5DNfiFDmQ6XsCqCgG6Q-iD0zKBpKRv1B4z/exec'; // Replace with your actual Google Apps Script URL
 
             $.ajax({
                 url: scriptUrl,
@@ -179,7 +179,7 @@
         }
 
         function saveUser(user) {
-            var scriptUrl = 'YOUR_SCRIPT_URL'; // Replace with your actual Google Apps Script URL
+            var scriptUrl = 'https://script.google.com/macros/s/AKfycbyOk3ZPmWzE-CtMFxyB3e4LBVhpsdC2vZ5DNfiFDmQ6XsCqCgG6Q-iD0zKBpKRv1B4z/exec'; // Replace with your actual Google Apps Script URL
             var users = [];
 
             getStoredUsers(function(existingUsers) {
